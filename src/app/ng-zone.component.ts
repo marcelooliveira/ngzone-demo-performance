@@ -8,6 +8,7 @@ import {NgIf} from '@angular/common';
 
     <p>Progress: {{progress}}%</p>
     <p *ngIf="progress >= 100">Done processing {{label}} of Angular zone!</p>
+    <p *ngIf="progress >= 100">Elapsed time: {{timeDiff}} seconds</p>
 
     <button (click)="processWithinAngularZone()">Process within Angular zone</button>
     <button (click)="processOutsideOfAngularZone()">Process outside of Angular zone</button>
@@ -16,6 +17,9 @@ import {NgIf} from '@angular/common';
 export class NgZoneDemo {
   progress: number = 0;
   label: string;
+  startTime: Date;
+  endTime: Date;
+  timeDiff: number;
 
   constructor(private _ngZone: NgZone) {}
 
@@ -24,7 +28,11 @@ export class NgZoneDemo {
   processWithinAngularZone() {
     this.label = 'inside';
     this.progress = 0;
-    this._increaseProgress(() => console.log('Inside Done!'));
+    this.start();
+    this._increaseProgress(() => {
+      this.end();
+      console.log('Inside Done!');
+    });
   }
 
   // Loop outside of the Angular zone
@@ -32,10 +40,13 @@ export class NgZoneDemo {
   processOutsideOfAngularZone() {
     this.label = 'outside';
     this.progress = 0;
+    this.start();
     this._ngZone.runOutsideAngular(() => {
       this._increaseProgress(() => {
         // reenter the Angular zone and display done
-        this._ngZone.run(() => { console.log('Outside Done!'); });
+        this.end();
+        this._ngZone.run(() => {           
+          console.log('Outside Done!'); });
       });
     });
   }
@@ -50,4 +61,18 @@ export class NgZoneDemo {
       doneCallback();
     }
   }
+  
+  start() {
+    this.startTime = new Date();
+  };
+
+  end() {
+    this.endTime = new Date();
+    this.timeDiff = this.endTime.valueOf() - this.startTime.valueOf();
+    this.timeDiff = this.timeDiff / 1000.0;
+
+    // get seconds 
+    var seconds = Math.round(this.timeDiff);
+    console.log(seconds + " seconds");
+  }  
 }
